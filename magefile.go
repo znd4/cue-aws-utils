@@ -10,8 +10,10 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	cueCmd "cuelang.org/go/cmd/cue/cmd"
+	"github.com/google/renameio"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/samber/lo"
@@ -103,7 +105,23 @@ func unmarshalObjectValue(val cty.Value) map[string]string {
 	return result
 }
 
-const outfile = "static.cue"
+const (
+	outfile       = "static.cue"
+	licenseNotice = `
+// Copyright 2020-2024 [name of copyright owner]
+// Derived from terraform-aws-utils (https://github.com/cloudposse/terraform-aws-utils)
+// Original work Copyright 2020-2024 Cloud Posse, LLC
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// This file is generated automatically.
+// To update, run %s
+`
+)
 
 func Update() error {
 	resp := lo.Must(http.Get(`https://raw.githubusercontent.com/cloudposse/terraform-aws-utils/refs/heads/main/main.tf`))
@@ -116,23 +134,26 @@ func Update() error {
 	// Example usage
 	locals, err := parseLocalsFromHCL(body, "config.hcl")
 	if err != nil {
-		return fmt.Errorf("Error: %s\n", err)
+		return fmt.Errorf("Failed to parse hcl: %w", err)
 	}
 
 	r, w := io.Pipe()
-	logger.Info("Writing to cue file")
+	file := lo.Must(renameio.TempFile("", outfile))
+	defer file.Close()
 	cmd := lo.Must(cueCmd.New([]string{
 		"--verbose",
 		"import",
-		"--force",
-		"--outfile", outfile,
 		"--package", "config",
-		"json:",
-		"-",
+		"--outfile", "-", // output
+		"json:", "-", // input
 	}))
+
+	fmt.Fprintf(file, strings.TrimSpace(licenseNotice)+"\n", "`mage update`")
+
 	cmd.SetIn(r)
-	cmd.SetOut(os.Stdout)
+	cmd.SetOut(file)
 	cmd.SetErr(os.Stderr)
+
 	ch := make(chan error, 2)
 	go func() {
 		defer w.Close()
@@ -153,6 +174,7 @@ func Update() error {
 	if <-ch != nil {
 		return fmt.Errorf("JSON encoding failed: %w", err)
 	}
+	file.CloseAtomicallyReplace()
 
 	return nil
 }
