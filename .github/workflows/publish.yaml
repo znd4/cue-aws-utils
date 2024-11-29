@@ -1,0 +1,21 @@
+on:
+  push:
+    branches:
+      - main
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: cue-lang/setup-cue@v1.0.0
+        id: install-cue
+      - name: docker login
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - env:
+          CUE_REGISTRY: ghcr.io/znd4/cue-aws-utils
+        run: |
+          cue mod publish $GITHUB_SHA
