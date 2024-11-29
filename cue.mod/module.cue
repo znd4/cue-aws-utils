@@ -1,4 +1,4 @@
-module: "ghcr.io/znd4/cue-aws-utils@v0"
+module: "cue-aws-utils"
 language: {
 	version: "v0.10.1"
 }

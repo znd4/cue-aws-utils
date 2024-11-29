@@ -24,7 +24,7 @@ jobs:
           VERSION: ${{ github.event.release.tag_name }}
           CUE_REGISTRY: |
             inline: defaultRegistry: {
-              registry: "ghcr.io/znd4/cue-aws-utils"
+              registry: "ghcr.io/znd4"
               stripPrefix: true
             }
         run: |
