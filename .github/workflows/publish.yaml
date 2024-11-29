@@ -1,7 +1,8 @@
 on:
-  push:
-    branches:
-      - main
+  release:
+    tags:
+      - 'v*'
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -17,5 +18,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - env:
           CUE_REGISTRY: ghcr.io/znd4/cue-aws-utils
+          VERSION: ${{ github.event.release.tag_name }}
         run: |
-          cue mod publish $GITHUB_SHA
+          cue mod publish "$VERSION"
