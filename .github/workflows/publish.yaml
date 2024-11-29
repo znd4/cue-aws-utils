@@ -21,7 +21,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - env:
-          CUE_REGISTRY: ghcr.io/znd4/cue-aws-utils
           VERSION: ${{ github.event.release.tag_name }}
         run: |
           cue mod publish "$VERSION"
