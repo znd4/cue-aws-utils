@@ -143,7 +143,7 @@ func Update() error {
 	cmd := lo.Must(cueCmd.New([]string{
 		"--verbose",
 		"import",
-		"--package", "config",
+		"--package", "static",
 		"--outfile", "-", // output
 		"json:", "-", // input
 	}))
